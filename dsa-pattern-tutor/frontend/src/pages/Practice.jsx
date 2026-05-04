@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Icon from "../components/Icon";
 import Card, {
   CardHeader,
@@ -49,6 +50,7 @@ const getConfusionAdvice = (selectedPattern, correctPattern) =>
 const PAGE_SIZE = 50;
 //dark mode added
 const Practice = () => {
+  const navigate = useNavigate();
   const problemDetailRef = useRef(null);
   const [problem, setProblem] = useState(null);
   const [selectedPattern, setSelectedPattern] = useState(null);
@@ -124,10 +126,7 @@ const Practice = () => {
     setSearchError("");
     try {
       const data = await problemService.getLeetCodeProblem(titleSlug);
-      setProblem(data.problem);
-      setSelectedPattern(null);
-      setShowFeedback(false);
-      setFeedback(null);
+      openLeetCodeProblem(data.problem);
     } catch (error) {
       console.error("Failed to load LeetCode problem:", error);
       setSearchError(
@@ -137,6 +136,32 @@ const Practice = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const showProblemBelow = (nextProblem) => {
+    setProblem(nextProblem);
+    setSelectedPattern(null);
+    setShowFeedback(false);
+    setFeedback(null);
+    setTimeout(() => {
+      problemDetailRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
+  };
+
+  const openLeetCodeProblem = (nextProblem) => {
+    if (nextProblem.inferredPatterns?.length > 0) {
+      showProblemBelow(nextProblem);
+      return;
+    }
+
+    navigate("/code", {
+      state: {
+        leetcodeTitleSlug: nextProblem.titleSlug,
+      },
+    });
   };
 
   const loadProblemList = async ({ reset = false } = {}) => {
@@ -175,16 +200,7 @@ const Practice = () => {
     setSearchError("");
     try {
       const data = await problemService.getLeetCodeProblem(titleSlug);
-      setProblem(data.problem);
-      setSelectedPattern(null);
-      setShowFeedback(false);
-      setFeedback(null);
-      setTimeout(() => {
-        problemDetailRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 0);
+      openLeetCodeProblem(data.problem);
     } catch (error) {
       console.error("Failed to load selected LeetCode problem:", error);
       setSearchError(
@@ -658,31 +674,6 @@ const Practice = () => {
                   </div>
                 )}
 
-<<<<<<< HEAD
-                {feedback.confusionExplanation && (
-                  <div className="p-4 bg-accent/5 border border-accent/20 rounded-lg">
-                    <h3 className="font-medium text-text-primary mb-2">
-                      Confusion Explanator:
-                    </h3>
-                    <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
-                      {feedback.confusionExplanation}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <div className="flex gap-3">
-                <button onClick={handleNextProblem} className="btn-primary flex-1">
-                  Next Problem
-                </button>
-                <button onClick={() => setShowFeedback(false)} className="btn-secondary">
-                  Review
-                </button>
-              </div>
-            </CardFooter>
-          </Card>
-=======
                 {!feedback.isCorrect && (
                   <div className="p-4 bg-red-50 rounded-lg border border-red-200">
                     <h3 className="font-medium text-red-700 mb-2">
@@ -778,7 +769,6 @@ const Practice = () => {
               </CardContent>
             </Card>
           </div>
->>>>>>> 57a5b91aa60546f143543f7b02f6ae895331f563
         </div>
       )}
     </div>

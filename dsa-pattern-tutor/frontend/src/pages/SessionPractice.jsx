@@ -26,6 +26,7 @@ const PATTERNS = [
 ];
 
 const ChartColors = ["#4f46e5", "#10b981", "#f97316", "#ef4444", "#facc15"];
+const SESSION_QUESTION_COUNT = 12;
 
 const PieChart = ({ segments }) => {
   const radius = 80;
@@ -201,7 +202,7 @@ const SessionPractice = () => {
           Session Practice
         </h1>
         <p className="text-text-secondary mt-2 max-w-2xl">
-          Work through a 12-question session with weak-topic and random
+          Work through a {SESSION_QUESTION_COUNT}-question session with weak-topic and random
           questions. Submit each question as you go and
           review your detailed results at the end.
         </p>

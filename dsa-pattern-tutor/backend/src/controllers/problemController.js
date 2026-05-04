@@ -3,13 +3,11 @@ const Problem = require("../models/Problem");
 const User = require("../models/User");
 const Analytics = require("../models/Analytics");
 
-<<<<<<< HEAD
-const SESSION_QUESTION_COUNT = 12;
-const WEAK_SESSION_QUESTION_COUNT = 6;
-=======
 const LEETCODE_API_URL =
   process.env.LEETCODE_API_URL || "https://alfa-leetcode-api.onrender.com";
->>>>>>> 60623f3 (my local changes)
+const LEETCODE_GRAPHQL_URL = "https://leetcode.com/graphql";
+const SESSION_QUESTION_COUNT = 12;
+const WEAK_SESSION_QUESTION_COUNT = 6;
 
 const formatProblemForSession = (problem) => ({
   id: problem._id,
@@ -46,6 +44,20 @@ const sanitizeProblemContent = (content = "") =>
     .replace(/\son\w+="[^"]*"/gi, "")
     .replace(/\son\w+='[^']*'/gi, "");
 
+const stripProblemContent = (content = "") =>
+  sanitizeProblemContent(content)
+    .replace(/<pre>/gi, "\n")
+    .replace(/<\/pre>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
 const normalizeTitleSlug = (value = "") =>
   value
     .trim()
@@ -81,7 +93,7 @@ const normalizeLeetCodeProblem = (question) => {
     titleSlug: question.titleSlug,
     difficulty: question.difficulty?.toLowerCase() || "medium",
     contentHtml: sanitizeProblemContent(question.content || ""),
-    description: "",
+    description: stripProblemContent(question.content || ""),
     examples: [],
     constraints: [],
     tags: topicTags,
@@ -92,6 +104,78 @@ const normalizeLeetCodeProblem = (question) => {
     stats: question.stats,
     url: `https://leetcode.com/problems/${question.titleSlug}/`,
   };
+};
+
+const fetchWithTimeout = async (url, options = {}) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const fetchSelectedProblemFromAlfa = async (titleSlug) => {
+  const response = await fetchWithTimeout(
+    `${LEETCODE_API_URL}/select?titleSlug=${encodeURIComponent(titleSlug)}`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`Alfa LeetCode API returned ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.question || data;
+};
+
+const fetchSelectedProblemFromLeetCode = async (titleSlug) => {
+  const response = await fetchWithTimeout(LEETCODE_GRAPHQL_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Referer: `https://leetcode.com/problems/${titleSlug}/`,
+      Origin: "https://leetcode.com",
+      "User-Agent": "Mozilla/5.0",
+    },
+    body: JSON.stringify({
+      query: `
+        query questionData($titleSlug: String!) {
+          question(titleSlug: $titleSlug) {
+            questionId
+            questionFrontendId
+            title
+            titleSlug
+            content
+            difficulty
+            likes
+            dislikes
+            stats
+            topicTags {
+              name
+              slug
+            }
+          }
+        }
+      `,
+      variables: { titleSlug },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`LeetCode GraphQL returned ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (data.errors?.length > 0) {
+    throw new Error(data.errors[0].message || "LeetCode GraphQL error");
+  }
+
+  return data.data?.question;
 };
 
 const normalizeLeetCodeProblemListItem = (question) => {
@@ -194,21 +278,30 @@ exports.getLeetCodeProblem = async (req, res, next) => {
       });
     }
 
-    const response = await fetch(
-      `${LEETCODE_API_URL}/select?titleSlug=${encodeURIComponent(titleSlug)}`,
-    );
+    let question = null;
+    let lastError = null;
 
-    if (!response.ok) {
-      return res.status(response.status).json({
-        message: "Failed to fetch problem from LeetCode API",
-      });
+    try {
+      question = await fetchSelectedProblemFromAlfa(titleSlug);
+    } catch (error) {
+      lastError = error;
     }
 
-    const data = await response.json();
-    const question = data.question || data;
+    if (!question?.titleSlug || !question?.title) {
+      try {
+        question = await fetchSelectedProblemFromLeetCode(titleSlug);
+      } catch (error) {
+        lastError = error;
+      }
+    }
 
     if (!question?.titleSlug || !question?.title) {
-      return res.status(404).json({ message: "LeetCode problem not found" });
+      return res.status(404).json({
+        message:
+          "LeetCode problem not found. Use the exact slug from the URL, for example two-sum.",
+        detail:
+          process.env.NODE_ENV === "development" ? lastError?.message : undefined,
+      });
     }
 
     res.status(200).json({
