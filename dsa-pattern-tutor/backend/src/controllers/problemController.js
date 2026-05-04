@@ -7,6 +7,7 @@ const Analytics = require('../models/Analytics');
 // @access  Public
 exports.getRandomProblem = async (req, res, next) => {
   try {
+    console.log(req.query)
     const { difficulty } = req.query;
 
     const query = { isActive: true };

@@ -1,12 +1,65 @@
 const User = require('../models/User');
 const Analytics = require('../models/Analytics');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+const normalizeEmail = (email = '') => email.trim().toLowerCase();
+
+const sanitizeUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+});
+
+const sendTokenResponse = (user, statusCode, res) => {
+  const token = user.getSignedJwtToken();
+
+  res
+    .status(statusCode)
+    .cookie('token', token, cookieOptions)
+    .json({
+      success: true,
+      user: sanitizeUser(user),
+    });
+};
+
+const validatePassword = (password) => {
+  if (typeof password !== 'string' || password.length < 8) {
+    return 'Password must be at least 8 characters';
+  }
+
+  if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+    return 'Password must include uppercase, lowercase, and number characters';
+  }
+
+  return null;
+};
+
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+    const email = normalizeEmail(req.body.email);
+    const { password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Please provide name, email, and password' });
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return res.status(400).json({ message: passwordError });
+    }
 
     // Check if user exists
     const userExists = await User.findOne({ email });
@@ -24,19 +77,7 @@ exports.register = async (req, res, next) => {
     // Create analytics for user
     await Analytics.create({ userId: user._id });
 
-    // Generate token
-    const token = user.getSignedJwtToken();
-
-    res.status(201).json({
-      success: true,
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
+    sendTokenResponse(user, 201, res);
   } catch (error) {
     next(error);
   }
@@ -47,7 +88,8 @@ exports.register = async (req, res, next) => {
 // @access  Public
 exports.login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { password } = req.body;
 
     // Validate email & password
     if (!email || !password) {
@@ -66,19 +108,7 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate token
-    const token = user.getSignedJwtToken();
-
-    res.status(200).json({
-      success: true,
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
+    sendTokenResponse(user, 200, res);
   } catch (error) {
     next(error);
   }
@@ -90,6 +120,10 @@ exports.login = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
     res.status(200).json({
       success: true,
@@ -109,23 +143,33 @@ exports.getMe = async (req, res, next) => {
   }
 };
 
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
+exports.logout = async (req, res) => {
+  res
+    .status(200)
+    .cookie('token', '', {
+      ...cookieOptions,
+      maxAge: 0,
+    })
+    .json({ success: true, message: 'Logged out successfully' });
+};
+
 // @desc    Forgot password
 // @route   POST /api/auth/forgot-password
 // @access  Public
 exports.forgotPassword = async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'No user found with that email' });
-    }
 
-    // In production, you would generate a reset token and send email
-    // For now, we'll just return a success message
+    // Avoid leaking whether an email exists. A real mailer/reset-token
+    // implementation can be plugged in here without changing the API.
     res.status(200).json({
       success: true,
-      message: 'Password reset email sent (demo mode - no email actually sent)',
+      message: 'If an account exists for that email, password reset instructions will be sent.',
     });
   } catch (error) {
     next(error);

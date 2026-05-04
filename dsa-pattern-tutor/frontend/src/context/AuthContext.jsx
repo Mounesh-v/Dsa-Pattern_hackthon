@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
@@ -28,29 +28,27 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    checkAuth();
+  const checkAuth = useCallback(async () => {
+    try {
+      const data = await authService.getMe();
+      setUser(data.user);
+    } catch {
+      localStorage.removeItem('token');
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const data = await authService.getMe();
-        setUser(data.user);
-      } catch (err) {
-        localStorage.removeItem('token');
-        setUser(null);
-      }
-    }
-    setLoading(false);
-  };
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const login = async (email, password) => {
     try {
       setError(null);
       const data = await authService.login(email, password);
-      localStorage.setItem('token', data.token);
+      localStorage.removeItem('token');
       setUser(data.user);
       return { success: true };
     } catch (err) {
@@ -64,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const data = await authService.register(name, email, password);
-      localStorage.setItem('token', data.token);
+      localStorage.removeItem('token');
       setUser(data.user);
       return { success: true };
     } catch (err) {
@@ -74,9 +72,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // Local logout should still succeed if the session has already expired.
+    } finally {
+      localStorage.removeItem('token');
+      setUser(null);
+    }
   };
 
   const value = {
