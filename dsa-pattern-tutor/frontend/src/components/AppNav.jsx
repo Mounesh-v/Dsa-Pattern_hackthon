@@ -11,12 +11,12 @@ const AppNav = ({ title = 'DSA Pattern Tutor' }) => {
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
 
   return (
-    <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-border">
+    <nav className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
               <Icon name="code" size={20} className="text-white" />
             </div>
             <span className="font-display font-bold text-xl text-text-primary">
@@ -65,7 +65,7 @@ const AppNav = ({ title = 'DSA Pattern Tutor' }) => {
 
                 {/* Mobile menu */}
                 {showMenu && (
-                  <div className="absolute top-16 right-4 lg:hidden bg-white border border-border rounded-lg shadow-lg py-2 min-w-[160px]">
+                  <div className="absolute top-16 right-4 lg:hidden bg-card border border-border rounded-lg shadow-lg py-2 min-w-[160px]">
                     <Link
                       to="/profile"
                       className="flex items-center gap-2 px-4 py-2 hover:bg-lightBlue transition-colors"
