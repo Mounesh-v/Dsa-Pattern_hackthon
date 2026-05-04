@@ -21,8 +21,13 @@ const RegisterPage = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+      setError('Password must include uppercase, lowercase, and number characters');
       return;
     }
 
@@ -106,7 +111,7 @@ const RegisterPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-field w-full"
-                placeholder="••••••••"
+                placeholder="********"
                 required
               />
             </div>
@@ -120,7 +125,7 @@ const RegisterPage = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="input-field w-full"
-                placeholder="••••••••"
+                placeholder="********"
                 required
               />
             </div>

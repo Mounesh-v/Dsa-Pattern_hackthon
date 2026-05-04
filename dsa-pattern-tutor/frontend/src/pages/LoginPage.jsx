@@ -80,7 +80,7 @@ const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-field w-full"
-                placeholder="••••••••"
+                placeholder="********"
                 required
               />
             </div>

@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide a name'],
     trim: true,
+    minlength: [2, 'Name must be at least 2 characters'],
+    maxlength: [80, 'Name cannot exceed 80 characters'],
   },
   email: {
     type: String,
@@ -21,7 +23,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Please provide a password'],
-    minlength: 6,
+    minlength: [8, 'Password must be at least 8 characters'],
     select: false,
   },
   role: {
@@ -89,8 +91,14 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 // Method to get JWT token
 userSchema.methods.getSignedJwtToken = function () {
   const jwt = require('jsonwebtoken');
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret || jwtSecret.length < 32) {
+    throw new Error('JWT_SECRET must be configured and at least 32 characters long.');
+  }
+
+  return jwt.sign({ id: this._id, role: this.role }, jwtSecret, {
+    expiresIn: process.env.JWT_EXPIRE || '7d',
   });
 };
 
