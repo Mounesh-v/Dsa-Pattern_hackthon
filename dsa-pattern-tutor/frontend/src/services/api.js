@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { toast } from '../components/Toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://dsa-pattern-hackthon-1.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
