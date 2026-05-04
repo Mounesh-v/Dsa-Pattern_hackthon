@@ -10,44 +10,44 @@ export default {
       colors: {
         // Light Theme
         background: {
-          DEFAULT: '#F8FAFC',
-          light: '#F1F5F9',
+          DEFAULT: 'var(--color-background)',
+          light: 'var(--color-background-light)',
         },
         card: {
-          DEFAULT: '#FFFFFF',
-          light: '#F8FAFC',
+          DEFAULT: 'var(--color-card)',
+          light: 'var(--color-card-light)',
         },
         text: {
-          primary: '#0F172A',
-          secondary: '#64748B',
-          muted: '#94A3B8',
+          primary: 'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          muted: 'var(--color-text-muted)',
         },
         accent: {
-          DEFAULT: '#6366F1',
-          hover: '#4F46E5',
-          light: '#EEF2FF',
+          DEFAULT: 'var(--color-accent)',
+          hover: 'var(--color-accent-hover)',
+          light: 'var(--color-accent-light)',
         },
-        lightBlue: '#EEF2FF',
+        lightBlue: 'var(--color-light-blue)',
         border: {
-          DEFAULT: '#E2E8F0',
-          light: '#F1F5F9',
+          DEFAULT: 'var(--color-border)',
+          light: 'var(--color-border-light)',
         },
 
         // Dark Theme
         dark: {
-          background: '#0B0F19',
-          card: '#111827',
+          background: 'var(--color-background)',
+          card: 'var(--color-card)',
           text: {
-            primary: '#E5E7EB',
-            secondary: '#9CA3AF',
-            muted: '#6B7280',
+            primary: 'var(--color-text-primary)',
+            secondary: 'var(--color-text-secondary)',
+            muted: 'var(--color-text-muted)',
           },
           accent: {
-            DEFAULT: '#8B5CF6',
-            hover: '#7C3AED',
-            light: '#F3E8FF',
+            DEFAULT: 'var(--color-accent)',
+            hover: 'var(--color-accent-hover)',
+            light: 'var(--color-accent-light)',
           },
-          border: '#1F2937',
+          border: 'var(--color-border)',
         },
       },
       fontFamily: {

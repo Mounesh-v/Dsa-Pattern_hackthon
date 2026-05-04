@@ -3,20 +3,55 @@
 @config "../tailwind.config.js";
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --color-background: #f8fafc;
+    --color-background-light: #f1f5f9;
+    --color-card: #ffffff;
+    --color-card-light: #f8fafc;
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #64748b;
+    --color-text-muted: #94a3b8;
+    --color-accent: #6366f1;
+    --color-accent-hover: #4f46e5;
+    --color-accent-light: #eef2ff;
+    --color-light-blue: #eef2ff;
+    --color-border: #e2e8f0;
+    --color-border-light: #f1f5f9;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --color-background: #0b0f19;
+    --color-background-light: #111827;
+    --color-card: #111827;
+    --color-card-light: #172033;
+    --color-text-primary: #e5e7eb;
+    --color-text-secondary: #a7b0c0;
+    --color-text-muted: #7b8496;
+    --color-accent: #8b5cf6;
+    --color-accent-hover: #7c3aed;
+    --color-accent-light: rgba(139, 92, 246, 0.18);
+    --color-light-blue: rgba(139, 92, 246, 0.14);
+    --color-border: #253044;
+    --color-border-light: #1f2937;
+  }
+
   * {
     @apply border-border;
   }
 
+  html,
   body {
     @apply bg-background text-text-primary;
   }
 
-  .dark {
-    @apply bg-dark-background text-dark-text-primary;
-  }
-
   .dark * {
     @apply border-dark-border;
+  }
+
+  ::selection {
+    @apply bg-accent/25 text-text-primary;
   }
 }
 
@@ -71,6 +106,27 @@
 
   .dark .section-white {
     @apply bg-dark-card;
+  }
+
+  .dark .bg-white {
+    background-color: var(--color-card);
+  }
+
+  .dark .bg-gray-50,
+  .dark .bg-slate-50 {
+    background-color: var(--color-background-light);
+  }
+
+  .dark .text-gray-900,
+  .dark .text-slate-900 {
+    color: var(--color-text-primary);
+  }
+
+  .dark .text-gray-700,
+  .dark .text-gray-600,
+  .dark .text-slate-700,
+  .dark .text-slate-600 {
+    color: var(--color-text-secondary);
   }
 }
 
