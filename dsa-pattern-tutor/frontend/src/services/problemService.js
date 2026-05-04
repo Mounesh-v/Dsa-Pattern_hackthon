@@ -1,19 +1,24 @@
-import api from './api';
+import api from "./api";
 
 export const problemService = {
   getRandomProblem: async (difficulty) => {
     const params = difficulty ? { difficulty } : {};
-    const response = await api.get('/problems/random', { params });
+    const response = await api.get("/problems/random", { params });
     return response.data;
   },
 
   getAdaptiveProblem: async () => {
-    const response = await api.get('/problems/adaptive');
+    const response = await api.get("/problems/adaptive");
+    return response.data;
+  },
+
+  getSessionProblems: async () => {
+    const response = await api.get("/problems/session");
     return response.data;
   },
 
   getAllProblems: async (filters = {}) => {
-    const response = await api.get('/problems', { params: filters });
+    const response = await api.get("/problems", { params: filters });
     return response.data;
   },
 
@@ -23,7 +28,7 @@ export const problemService = {
   },
 
   createProblem: async (problemData) => {
-    const response = await api.post('/problems', problemData);
+    const response = await api.post("/problems", problemData);
     return response.data;
   },
 
