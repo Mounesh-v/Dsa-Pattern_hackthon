@@ -163,6 +163,7 @@ function normalizeCodeAnalysis(value) {
 
   return {
     score: Number.isFinite(score) ? Math.max(0, Math.min(100, Math.round(score))) : 0,
+    provider: value?.provider || "gemini",
     summary:
       typeof value?.summary === "string" && value.summary.trim()
         ? value.summary.trim()
@@ -193,6 +194,61 @@ function normalizeCodeAnalysis(value) {
         ? value.codeOutput.trim()
         : "Code output could not be determined from static analysis.",
   };
+}
+
+function fallbackCodeAnalysis({ problem, language, code, reason }) {
+  const lowerCode = code.toLowerCase();
+  const lineCount = code.split("\n").filter((line) => line.trim()).length;
+  const hasLoop = /\b(for|while|forEach|map|filter|reduce)\b/.test(code);
+  const hasCondition = /\b(if|switch|case|elif|else)\b/.test(code);
+  const hasDataStructure =
+    /\b(map|set|dict|hash|heap|queue|stack|array|list|vector)\b/i.test(code);
+  const likelyHandlesInput =
+    /\b(input|stdin|readline|scanner|bufferedreader|cin|argv)\b/i.test(code);
+
+  let score = 35;
+  if (lineCount >= 8) score += 10;
+  if (hasLoop) score += 10;
+  if (hasCondition) score += 10;
+  if (hasDataStructure) score += 8;
+  if (likelyHandlesInput) score += 7;
+  if (lowerCode.includes("write your approach here")) score = 0;
+
+  const cappedScore = Math.max(0, Math.min(70, score));
+  const reasonText = reason ? ` Gemini fallback reason: ${reason}` : "";
+
+  return normalizeCodeAnalysis({
+    provider: "local-fallback",
+    score: cappedScore,
+    summary:
+      "Gemini could not complete the analysis, so this is a local fallback review based on visible code structure.",
+    approachFeedback: `Review whether your ${language} solution matches the intended ${formatPattern(
+      problem.correctPattern,
+    )} pattern and passes the examples.${reasonText}`,
+    complexity:
+      hasLoop || hasDataStructure
+        ? "The submitted code appears to contain algorithmic structure, but exact complexity needs manual verification."
+        : "Complexity could not be determined confidently from the submitted code.",
+    keyPoints: [
+      hasLoop
+        ? "The code includes iteration, which may be part of the intended approach."
+        : "No obvious loop was detected; confirm this is expected for the problem.",
+      hasCondition
+        ? "The code includes branching for cases or decisions."
+        : "No obvious conditional branch was detected; check edge cases.",
+      hasDataStructure
+        ? "The code appears to use a data structure."
+        : "Consider whether the intended pattern needs an explicit data structure.",
+    ],
+    improvements: [
+      "Run the sample cases manually and compare outputs.",
+      "Document the invariant or state used by the intended pattern.",
+      "Check empty, single-item, duplicate, and boundary inputs.",
+    ],
+    expectedOutput: JSON.stringify(problem.examples || [], null, 2),
+    codeOutput:
+      "Gemini analysis was unavailable, so code output was not inferred automatically.",
+  });
 }
 
 function hasOnlyStarterCode(code) {
@@ -293,7 +349,13 @@ async function analyzeCodeSubmission({ problem, language, code }) {
 
     return normalizeCodeAnalysis(parsed);
   } catch (error) {
-    throw new Error("Unable to analyze code with Gemini. Please try again.");
+    console.error("[Gemini] Code analysis failed:", error.message);
+    return fallbackCodeAnalysis({
+      problem,
+      language,
+      code,
+      reason: process.env.NODE_ENV === "development" ? error.message : "",
+    });
   }
 }
 

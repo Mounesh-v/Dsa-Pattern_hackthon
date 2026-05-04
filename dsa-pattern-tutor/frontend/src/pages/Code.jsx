@@ -311,11 +311,7 @@ const Code = () => {
                       </div>
                     )}
 
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <OutputWindow
-                        title="Expected Output"
-                        value={analysis.expectedOutput}
-                      />
+                    <div className="grid gap-4">
                       <OutputWindow
                         title="Your Code Output"
                         value={analysis.codeOutput}

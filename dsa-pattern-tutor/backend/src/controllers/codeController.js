@@ -81,7 +81,9 @@ exports.submitCode = async (req, res, next) => {
       firstAttemptScore: submission.score,
       tutorScore: serializeTutorScore(user),
       message: scoreAwarded
-        ? `Added ${analysis.score} tutor points for this question.`
+        ? analysis.provider === "local-fallback"
+          ? `Gemini was unavailable, so a local fallback review was used. Added ${analysis.score} tutor points for this question.`
+          : `Added ${analysis.score} tutor points for this question.`
         : "This question was already scored earlier. Feedback is refreshed, but tutor score stays unchanged.",
     });
   } catch (error) {

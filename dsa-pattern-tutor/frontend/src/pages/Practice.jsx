@@ -298,57 +298,14 @@ const Practice = () => {
                   </div>
                 )}
 
-<<<<<<< HEAD
                 {feedback.confusionExplanation && (
                   <div className="p-4 bg-accent/5 border border-accent/20 rounded-lg">
                     <h3 className="font-medium text-text-primary mb-2">
-                      Confusion Explanator:
+                      Why this confusion happened
                     </h3>
                     <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
                       {feedback.confusionExplanation}
                     </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <div className="flex gap-3">
-                <button onClick={handleNextProblem} className="btn-primary flex-1">
-                  Next Problem
-                </button>
-                <button onClick={() => setShowFeedback(false)} className="btn-secondary">
-                  Review
-                </button>
-              </div>
-            </CardFooter>
-          </Card>
-=======
-                {!feedback.isCorrect && (
-                  <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                    <h3 className="font-medium text-red-700 mb-2">
-                      Why this confusion happened
-                    </h3>
-                    <p className="text-text-secondary">
-                      {getConfusionAdvice(
-                        feedback.selectedPattern,
-                        feedback.correctPattern,
-                      )}
-                    </p>
-                    <div className="mt-4 text-sm text-text-secondary">
-                      <p className="font-semibold text-text-primary mb-2">
-                        How to track this next time
-                      </p>
-                      <p>
-                        Compare the problem structure against the key traits of
-                        the correct pattern above. If the problem involves{" "}
-                        {feedback.correctPattern
-                          .replace(/([A-Z])/g, " $1")
-                          .trim()
-                          .toLowerCase()}
-                        , focus on those signal words before choosing the
-                        pattern.
-                      </p>
-                    </div>
                   </div>
                 )}
               </CardContent>
@@ -418,7 +375,6 @@ const Practice = () => {
               </CardContent>
             </Card>
           </div>
->>>>>>> 57a5b91aa60546f143543f7b02f6ae895331f563
         </div>
       )}
     </div>
