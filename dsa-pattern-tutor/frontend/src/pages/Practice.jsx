@@ -24,41 +24,7 @@ const PATTERNS = [
   { id: "prefixSum", name: "Prefix Sum" },
   { id: "recursion", name: "Recursion" },
 ];
-
-const PATTERN_GUIDANCE = {
-  slidingWindow:
-    "Sliding window problems often need a contiguous range with an evolving sum, count, or window constraint. If you missed this one, look for repeated intervals and a moving window of elements.",
-  twoPointers:
-    "Two pointers are used when the problem asks for pairwise comparison or scanning from both ends. Check for sorted input, target sum, or left/right position movement.",
-  binarySearch:
-    "Binary search fits sorted data and find-first/last problems. If you selected another pattern, verify whether a monotonic search over a range is possible.",
-  dynamicProgramming:
-    "DP problems have overlapping subproblems and optimal substructure. When wrong, try identifying if the question asks for best/worst values using states or memoized recursion.",
-  greedy:
-    "Greedy patterns pick the best local choice at each step. If it was wrong, the problem likely requires tracking optimal decisions across the full input rather than one pass.",
-  backtracking:
-    "Backtracking appears when exploring many combinations with pruning. If incorrect, ask whether the problem requires generating valid paths rather than a direct formula.",
-  graphTraversal:
-    "Graph traversal problems need exploring nodes and edges. If you missed it, look for adjacency, connected components, or shortest path structure.",
-  dfs: "DFS is used for deep path exploration in trees or graphs. If you chose differently, see whether the problem requires exploring one branch at a time before backtracking.",
-  bfs: "BFS is used for shortest path levels or minimum steps in graphs. If it was wrong, the problem likely cares about uniform step distance from a starting point.",
-  heap: "Heap problems usually need repeated extraction of largest/smallest values. If you selected another pattern, check for frequent top-k or dynamic ordering needs.",
-  unionFind:
-    "Union Find is useful for connectivity and grouping in graphs. If mistaken, the problem likely asks whether nodes belong to the same set after merges.",
-  prefixSum:
-    "Prefix sum works when you need fast range-sum or accumulation queries. If wrong, check for repeated subarray sum calculations with constant-time queries.",
-  recursion:
-    "Recursion appears when a problem can be solved by solving smaller versions of itself. If mistaken, see whether the problem can be broken into identical subproblems recursively.",
-};
-
-const getConfusionAdvice = (selectedPattern, correctPattern) => {
-  if (selectedPattern === correctPattern) return null;
-  return (
-    PATTERN_GUIDANCE[correctPattern] ||
-    "Review the problem statement and compare the structure against the selected pattern to identify the best strategy."
-  );
-};
-
+//dark mode added
 const Practice = () => {
   const [problem, setProblem] = useState(null);
   const [selectedPattern, setSelectedPattern] = useState(null);
