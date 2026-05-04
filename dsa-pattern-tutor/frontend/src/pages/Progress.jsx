@@ -3,6 +3,29 @@ import Icon from '../components/Icon';
 import Card, { CardHeader, CardTitle, CardContent } from '../components/Card';
 import ProgressBar from '../components/ProgressBar';
 import { analyticsService } from '../services/analyticsService';
+import { Line, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Progress = () => {
   const [progressData, setProgressData] = useState(null);
@@ -78,62 +101,112 @@ const Progress = () => {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Progress Over Time */}
+        {/* Progress Over Time Chart */}
         <div>
           <Card>
             <CardHeader>
               <CardTitle>Progress Over Time</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {progressHistory.slice(0, 7).map((entry, index) => (
-                  <div key={index} className="flex items-center gap-4">
-                    <div className="w-24 text-sm text-text-secondary">
-                      {new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </div>
-                    <div className="flex-1">
-                      <ProgressBar value={entry.accuracy} max={100} size="sm" color="accent" />
-                    </div>
-                    <div className="w-16 text-right text-sm font-medium text-text-primary">
-                      {entry.accuracy.toFixed(0)}%
-                    </div>
-                  </div>
-                ))}
-
-                {progressHistory.length === 0 && (
-                  <div className="text-center py-8">
-                    <Icon name="chart" size={48} className="text-text-secondary mx-auto mb-4" />
-                    <p className="text-text-secondary">Start practicing to see your progress</p>
-                  </div>
-                )}
-              </div>
+              {progressHistory.length > 0 ? (
+                <div className="h-64">
+                  <Line
+                    data={{
+                      labels: progressHistory.slice(0, 7).map(entry =>
+                        new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      ),
+                      datasets: [
+                        {
+                          label: 'Accuracy %',
+                          data: progressHistory.slice(0, 7).map(entry => entry.accuracy),
+                          borderColor: 'rgb(99, 102, 241)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                          tension: 0.3,
+                          fill: true,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          display: false,
+                        },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          max: 100,
+                          ticks: {
+                            callback: (value) => value + '%',
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Icon name="chart" size={48} className="text-text-secondary mx-auto mb-4" />
+                  <p className="text-text-secondary">Start practicing to see your progress</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Achievements */}
+        {/* Statistics Chart */}
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Recent Achievements</CardTitle>
+              <CardTitle>Performance Statistics</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { icon: 'flame', title: '5 Day Streak', date: '2 days ago' },
-                  { icon: 'star', title: 'First Perfect Score', date: '1 week ago' },
-                  { icon: 'trophy', title: 'Pattern Master', date: '2 weeks ago' },
-                ].map((achievement, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-background rounded-lg">
-                    <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
-                      <Icon name={achievement.icon} size={20} className="text-accent" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-text-primary">{achievement.title}</h4>
-                      <p className="text-xs text-text-secondary">{achievement.date}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="h-64">
+                <Bar
+                  data={{
+                    labels: ['Total Problems', 'Solved', 'Accuracy', 'Streak'],
+                    datasets: [
+                      {
+                        label: 'Statistics',
+                        data: [
+                          overallStats.totalProblems || 0,
+                          overallStats.solved || 0,
+                          overallStats.accuracy || 0,
+                          overallStats.streak || 0,
+                        ],
+                        backgroundColor: [
+                          'rgba(99, 102, 241, 0.7)',
+                          'rgba(34, 197, 94, 0.7)',
+                          'rgba(249, 115, 22, 0.7)',
+                          'rgba(236, 72, 153, 0.7)',
+                        ],
+                        borderColor: [
+                          'rgb(99, 102, 241)',
+                          'rgb(34, 197, 94)',
+                          'rgb(249, 115, 22)',
+                          'rgb(236, 72, 153)',
+                        ],
+                        borderWidth: 1,
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                      },
+                    },
+                  }}
+                />
               </div>
             </CardContent>
           </Card>
