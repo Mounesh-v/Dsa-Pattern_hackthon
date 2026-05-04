@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Editor from "@monaco-editor/react";
 import Card, {
   CardHeader,
@@ -57,6 +58,8 @@ const OutputWindow = ({ title, value }) => (
 );
 
 const Code = () => {
+  const location = useLocation();
+  const selectedLeetCodeSlug = location.state?.leetcodeTitleSlug;
   const [problem, setProblem] = useState(null);
   const [language, setLanguage] = useState("javascript");
   const [code, setCode] = useState(STARTER_CODE.javascript);
@@ -86,7 +89,9 @@ const Code = () => {
     setMessage("");
 
     try {
-      const data = await problemService.getRandomProblem();
+      const data = selectedLeetCodeSlug
+        ? await problemService.getLeetCodeProblem(selectedLeetCodeSlug)
+        : await problemService.getRandomProblem();
       setProblem(data.problem);
       setCode(STARTER_CODE[language]);
     } catch (err) {
@@ -128,6 +133,17 @@ const Code = () => {
         problemId: problem.id,
         language,
         code,
+        externalProblem:
+          problem.source === "leetcode"
+            ? {
+                source: problem.source,
+                title: problem.title,
+                description: problem.description,
+                examples: problem.examples,
+                constraints: problem.constraints,
+                correctPattern: problem.correctPattern,
+              }
+            : undefined,
       });
       setAnalysis(response.analysis);
       setTutorScore(response.tutorScore);
@@ -191,6 +207,17 @@ const Code = () => {
                     <p className="mt-2 text-sm capitalize text-text-secondary">
                       {problem?.difficulty}
                     </p>
+                    {problem?.source === "leetcode" && (
+                      <a
+                        href={problem.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-sm text-text-secondary hover:text-accent"
+                      >
+                        LeetCode
+                        <Icon name="externalLink" size={14} />
+                      </a>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -203,9 +230,16 @@ const Code = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="whitespace-pre-wrap leading-relaxed text-text-primary">
-                  {problem?.description}
-                </p>
+                {problem?.contentHtml ? (
+                  <div
+                    className="prose max-w-none leading-relaxed text-text-primary [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:bg-background [&_pre]:p-4 [&_code]:font-mono [&_strong]:text-text-primary"
+                    dangerouslySetInnerHTML={{ __html: problem.contentHtml }}
+                  />
+                ) : (
+                  <p className="whitespace-pre-wrap leading-relaxed text-text-primary">
+                    {problem?.description}
+                  </p>
+                )}
 
                 {problem?.examples?.length > 0 && (
                   <div className="mt-6 space-y-3">

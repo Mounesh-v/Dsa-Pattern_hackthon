@@ -26,11 +26,36 @@ function ensureTutorScore(user) {
 // @access  Private
 exports.submitCode = async (req, res, next) => {
   try {
-    const { problemId, language = "javascript", code } = req.body;
+    const { problemId, language = "javascript", code, externalProblem } = req.body;
     const userId = req.user.id;
 
     if (!problemId || !code?.trim()) {
       return res.status(400).json({ message: "Problem and code are required" });
+    }
+
+    if (externalProblem?.source === "leetcode") {
+      const user = await User.findById(userId);
+      const analysis = await analyzeCodeSubmission({
+        problem: {
+          title: externalProblem.title,
+          description: externalProblem.description,
+          examples: externalProblem.examples || [],
+          constraints: externalProblem.constraints || [],
+          correctPattern: externalProblem.correctPattern || null,
+        },
+        language,
+        code,
+      });
+
+      return res.status(200).json({
+        success: true,
+        scoreAwarded: false,
+        analysis,
+        firstAttemptScore: null,
+        tutorScore: serializeTutorScore(user),
+        message:
+          "External LeetCode question analyzed. Tutor score is only awarded for local tutor questions.",
+      });
     }
 
     const problem = await Problem.findById(problemId);

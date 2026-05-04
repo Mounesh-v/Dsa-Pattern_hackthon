@@ -1,11 +1,12 @@
 import api from "./api";
 
 export const codeService = {
-  submitCode: async ({ problemId, language, code }) => {
+  submitCode: async ({ problemId, language, code, externalProblem }) => {
     const response = await api.post("/code/submit", {
       problemId,
       language,
       code,
+      externalProblem,
     });
     return response.data;
   },

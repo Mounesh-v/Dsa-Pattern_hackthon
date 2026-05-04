@@ -10,6 +10,20 @@ export const problemService = {
     return response.data;
   },
 
+  getLeetCodeProblem: async (titleSlug) => {
+    const response = await api.get("/problems/leetcode", {
+      params: { titleSlug },
+    });
+    return response.data;
+  },
+
+  getLeetCodeProblems: async (filters = {}) => {
+    const response = await api.get("/problems/leetcode-list", {
+      params: filters,
+    });
+    return response.data;
+  },
+
   getAdaptiveProblem: async () => {
     const response = await api.get("/problems/adaptive", {
       loadingMessage: "Loading adaptive problem...",

@@ -1,3 +1,8 @@
+const dotenv = require("dotenv");
+const path = require("path");
+
+dotenv.config({ path: path.resolve(__dirname, "../../.env"), quiet: true });
+
 const PATTERN_NAMES = {
   slidingWindow: "Sliding Window",
   twoPointers: "Two Pointers",
@@ -17,7 +22,12 @@ const PATTERN_NAMES = {
 function getGeminiApiKeys() {
   return [process.env.GEMINI_API_KEY, process.env.GEMINI_FALLBACK_API_KEY]
     .map((key) => key?.trim())
-    .filter(Boolean);
+    .filter(
+      (key) =>
+        key &&
+        !key.toLowerCase().includes("your-gemini-api-key") &&
+        !key.toLowerCase().includes("your-backup-gemini-api-key"),
+    );
 }
 
 function getGeminiGenerateUrl(apiKey) {
@@ -64,6 +74,10 @@ async function generateGeminiContent(body) {
 }
 
 function formatPattern(pattern) {
+  if (!pattern) {
+    return "Unknown";
+  }
+
   return PATTERN_NAMES[pattern] || pattern.replace(/([A-Z])/g, " $1").trim();
 }
 
@@ -266,9 +280,48 @@ function hasOnlyStarterCode(code) {
   return meaningfulCode.length < 18;
 }
 
+function fallbackCodeAnalysis({ problem, code }) {
+  const hasMeaningfulCode = !hasOnlyStarterCode(code);
+
+  return normalizeCodeAnalysis({
+    score: hasMeaningfulCode ? 20 : 0,
+    summary: hasMeaningfulCode
+      ? "Your code was saved for review, but AI analysis is unavailable because Gemini is not configured on the backend."
+      : "This submission does not contain a real solution yet.",
+    approachFeedback: hasMeaningfulCode
+      ? "Add a valid Gemini API key in backend/.env and restart the backend to receive detailed tutor feedback."
+      : "Write the core algorithm before submitting. Placeholders and comments cannot be evaluated as a solution.",
+    complexity: "Complexity analysis requires Gemini feedback.",
+    keyPoints: hasMeaningfulCode
+      ? [
+          "Gemini feedback is currently unavailable.",
+          "Check your solution manually against the sample cases.",
+          "Restart the backend after updating backend/.env.",
+        ]
+      : [
+          "No real algorithm was submitted.",
+          "Placeholders and comments are not enough to evaluate correctness.",
+        ],
+    improvements: hasMeaningfulCode
+      ? [
+          "Verify edge cases against the problem constraints.",
+          "Make sure the implementation matches the intended DSA pattern.",
+          "Configure GEMINI_API_KEY to unlock full feedback.",
+        ]
+      : [
+          "Write the core algorithm instead of leaving placeholders.",
+          "Handle input parsing and edge cases.",
+        ],
+    expectedOutput: JSON.stringify(problem.examples || [], null, 2),
+    codeOutput: hasMeaningfulCode
+      ? "Code output was not executed. Gemini analysis is unavailable."
+      : "No output: submitted code is still a placeholder.",
+  });
+}
+
 async function analyzeCodeSubmission({ problem, language, code }) {
   if (getGeminiApiKeys().length === 0) {
-    throw new Error("GEMINI_API_KEY is not configured.");
+    return fallbackCodeAnalysis({ problem, language, code });
   }
 
   if (hasOnlyStarterCode(code)) {
