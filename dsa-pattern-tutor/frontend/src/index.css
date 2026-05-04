@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@config "../tailwind.config.js";
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-text-primary;
+  }
+
+  .dark {
+    @apply bg-dark-background text-dark-text-primary;
+  }
+
+  .dark * {
+    @apply border-dark-border;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-card border border-border rounded-card shadow-card p-6;
+  }
+
+  .dark .card {
+    @apply bg-dark-card border-dark-border;
+  }
+
+  .card-hover {
+    @apply hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-accent text-white font-semibold py-3 px-6 rounded-button hover:bg-accent-hover transition-colors duration-200;
+  }
+
+  .dark .btn-primary {
+    @apply bg-dark-accent hover:bg-dark-accent-hover;
+  }
+
+  .btn-secondary {
+    @apply bg-card border border-border text-text-primary font-semibold py-3 px-6 rounded-button hover:bg-accent/5 transition-colors duration-200;
+  }
+
+  .dark .btn-secondary {
+    @apply bg-dark-card border-dark-border text-dark-text-primary hover:bg-dark-accent/10;
+  }
+
+  .input-field {
+    @apply border border-border rounded-button px-4 py-3 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200;
+  }
+
+  .dark .input-field {
+    @apply border-dark-border bg-dark-background text-dark-text-primary focus:ring-dark-accent/20 focus:border-dark-accent;
+  }
+
+  .section-alt {
+    @apply bg-lightBlue;
+  }
+
+  .dark .section-alt {
+    @apply bg-dark-background;
+  }
+
+  .section-white {
+    @apply bg-card;
+  }
+
+  .dark .section-white {
+    @apply bg-dark-card;
+  }
+}
+
+@layer utilities {
+  .text-primary {
+    @apply text-text-primary;
+  }
+
+  .dark .text-primary {
+    @apply text-dark-text-primary;
+  }
+
+  .text-secondary {
+    @apply text-text-secondary;
+  }
+
+  .dark .text-secondary {
+    @apply text-dark-text-secondary;
+  }
+
+  .text-muted {
+    @apply text-text-muted;
+  }
+
+  .dark .text-muted {
+    @apply text-dark-text-muted;
+  }
+}

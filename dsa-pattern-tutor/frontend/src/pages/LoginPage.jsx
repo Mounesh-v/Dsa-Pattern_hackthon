@@ -1,0 +1,113 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import Icon from '../components/Icon';
+
+const LoginPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    const result = await login(email, password);
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.error);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background dark:bg-dark-background flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-3">
+            <div className="h-12 w-12 bg-accent rounded-lg flex items-center justify-center">
+              <Icon name="code" size={24} className="text-white" />
+            </div>
+            <div className="text-left">
+              <h1 className="font-display font-bold text-xl text-text-primary">DSA Pattern Tutor</h1>
+              <p className="text-xs text-text-secondary">Master patterns, not problems</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Login Card */}
+        <div className="card">
+          <div className="mb-6">
+            <h2 className="font-display font-semibold text-2xl text-text-primary mb-2">
+              Welcome back
+            </h2>
+            <p className="text-text-secondary">
+              Sign in to continue your pattern recognition journey
+            </p>
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-start gap-2">
+              <Icon name="warning" size={16} className="text-red-600 mt-0.5 flex-shrink-0" />
+              <span className="text-sm">{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field w-full"
+                placeholder="your@email.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-field w-full"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <button type="submit" className="btn-primary w-full">
+              Sign in
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-text-secondary">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-accent hover:underline font-medium">
+              Sign up
+            </Link>
+          </div>
+        </div>
+
+        {/* Back to home */}
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-sm text-text-secondary hover:text-text-primary transition-colors">
+            <Icon name="arrowLeft" size={16} className="inline mr-1" />
+            Back to home
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
