@@ -23,7 +23,7 @@ async function startServer() {
 app.use(helmet());
 
 // CORS configuration
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+const allowedOrigins = (process.env.CLIENT_URL || 'https://dsa-pattern-hackthon.vercel.app/')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
