@@ -9,6 +9,7 @@ const RegisterPage = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -31,11 +32,16 @@ const RegisterPage = () => {
       return;
     }
 
-    const result = await register(name, email, password);
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.error);
+    setIsSubmitting(true);
+    try {
+      const result = await register(name, email, password);
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result.error);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -130,8 +136,8 @@ const RegisterPage = () => {
               />
             </div>
 
-            <button type="submit" className="btn-primary w-full">
-              Create account
+            <button type="submit" className="btn-primary w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating account...' : 'Create account'}
             </button>
           </form>
 

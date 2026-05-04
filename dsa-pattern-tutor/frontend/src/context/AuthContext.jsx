@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { authService } from '../services/authService';
+import { useToast } from '../components/Toast';
 
 const AuthContext = createContext(null);
 
@@ -24,6 +25,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  const toast = useToast();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,10 +52,12 @@ export const AuthProvider = ({ children }) => {
       const data = await authService.login(email, password);
       localStorage.removeItem('token');
       setUser(data.user);
+      toast.success(`Welcome back, ${data.user.name}`);
       return { success: true };
     } catch (err) {
       const message = getAuthErrorMessage(err, 'Login failed');
       setError(message);
+      toast.error(message);
       return { success: false, error: message };
     }
   };
@@ -64,10 +68,12 @@ export const AuthProvider = ({ children }) => {
       const data = await authService.register(name, email, password);
       localStorage.removeItem('token');
       setUser(data.user);
+      toast.success('Account created successfully');
       return { success: true };
     } catch (err) {
       const message = getAuthErrorMessage(err, 'Registration failed');
       setError(message);
+      toast.error(message);
       return { success: false, error: message };
     }
   };
@@ -80,6 +86,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('token');
       setUser(null);
+      toast.success('Logged out successfully');
     }
   };
 

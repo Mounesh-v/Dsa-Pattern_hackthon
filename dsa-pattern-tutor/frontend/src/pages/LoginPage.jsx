@@ -7,6 +7,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -14,11 +15,16 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
 
-    const result = await login(email, password);
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.error);
+    setIsSubmitting(true);
+    try {
+      const result = await login(email, password);
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result.error);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -85,8 +91,8 @@ const LoginPage = () => {
               />
             </div>
 
-            <button type="submit" className="btn-primary w-full">
-              Sign in
+            <button type="submit" className="btn-primary w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
