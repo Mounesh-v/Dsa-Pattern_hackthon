@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Icon from "../components/Icon";
 import Card, {
   CardHeader,
@@ -24,8 +24,32 @@ const PATTERNS = [
   { id: "prefixSum", name: "Prefix Sum" },
   { id: "recursion", name: "Recursion" },
 ];
+
+const getPatternName = (patternId) =>
+  PATTERNS.find((pattern) => pattern.id === patternId)?.name ||
+  patternId?.replace(/([A-Z])/g, " $1").trim() ||
+  "Unknown";
+
+const toTitleSlug = (value) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\/(www\.)?leetcode\.com\/problems\//, "")
+    .replace(/\/.*$/, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+const getConfusionAdvice = (selectedPattern, correctPattern) =>
+  `Look for the structural signal before naming the technique. You selected ${getPatternName(
+    selectedPattern,
+  )}, while this problem is closer to ${getPatternName(correctPattern)}.`;
+
+const PAGE_SIZE = 50;
 //dark mode added
 const Practice = () => {
+  const problemDetailRef = useRef(null);
   const [problem, setProblem] = useState(null);
   const [selectedPattern, setSelectedPattern] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -33,11 +57,34 @@ const Practice = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [difficulty, setDifficulty] = useState("medium");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchError, setSearchError] = useState("");
+  const [problemListSearch, setProblemListSearch] = useState("");
+  const [problemList, setProblemList] = useState([]);
+  const [problemListTotal, setProblemListTotal] = useState(0);
+  const [problemListSkip, setProblemListSkip] = useState(0);
+  const [problemListDifficulty, setProblemListDifficulty] = useState("ALL");
+  const [problemListLoading, setProblemListLoading] = useState(false);
+  const [problemListError, setProblemListError] = useState("");
 
   useEffect(() => {
     loadProblem();
     loadStats();
   }, [difficulty]);
+
+  useEffect(() => {
+    loadProblemList({ reset: true });
+  }, [problemListDifficulty]);
+
+  const filteredProblemList = problemList.filter((item) => {
+    const query = problemListSearch.trim().toLowerCase();
+    if (!query) return true;
+
+    return (
+      item.title?.toLowerCase().includes(query) ||
+      item.titleSlug?.toLowerCase().includes(toTitleSlug(query))
+    );
+  });
 
   const loadStats = async () => {
     try {
@@ -50,6 +97,7 @@ const Practice = () => {
 
   const loadProblem = async () => {
     setLoading(true);
+    setSearchError("");
     try {
       const data = await problemService.getRandomProblem(difficulty);
       setProblem(data.problem);
@@ -63,6 +111,91 @@ const Practice = () => {
     }
   };
 
+  const handleSearch = async (event) => {
+    event.preventDefault();
+
+    const titleSlug = toTitleSlug(searchQuery);
+    if (!titleSlug) {
+      setSearchError("Enter a LeetCode title slug, question name, or URL.");
+      return;
+    }
+
+    setLoading(true);
+    setSearchError("");
+    try {
+      const data = await problemService.getLeetCodeProblem(titleSlug);
+      setProblem(data.problem);
+      setSelectedPattern(null);
+      setShowFeedback(false);
+      setFeedback(null);
+    } catch (error) {
+      console.error("Failed to load LeetCode problem:", error);
+      setSearchError(
+        error.response?.data?.message ||
+          "Could not fetch that LeetCode question. Try a slug like two-sum.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadProblemList = async ({ reset = false } = {}) => {
+    const nextSkip = reset ? 0 : problemListSkip;
+
+    setProblemListLoading(true);
+    setProblemListError("");
+    try {
+      const data = await problemService.getLeetCodeProblems({
+        limit: PAGE_SIZE,
+        skip: nextSkip,
+        difficulty:
+          problemListDifficulty === "ALL"
+            ? undefined
+            : problemListDifficulty.toUpperCase(),
+      });
+
+      setProblemList((current) =>
+        reset ? data.problems : [...current, ...data.problems],
+      );
+      setProblemListTotal(data.total || 0);
+      setProblemListSkip(nextSkip + (data.count || data.problems?.length || 0));
+    } catch (error) {
+      console.error("Failed to load LeetCode problem list:", error);
+      setProblemListError(
+        error.response?.data?.message ||
+          "Could not load the LeetCode problem list.",
+      );
+    } finally {
+      setProblemListLoading(false);
+    }
+  };
+
+  const handleSelectLeetCodeProblem = async (titleSlug) => {
+    setLoading(true);
+    setSearchError("");
+    try {
+      const data = await problemService.getLeetCodeProblem(titleSlug);
+      setProblem(data.problem);
+      setSelectedPattern(null);
+      setShowFeedback(false);
+      setFeedback(null);
+      setTimeout(() => {
+        problemDetailRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 0);
+    } catch (error) {
+      console.error("Failed to load selected LeetCode problem:", error);
+      setSearchError(
+        error.response?.data?.message ||
+          "Could not fetch that LeetCode question.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedPattern) {
       alert("Please select a pattern");
@@ -71,6 +204,24 @@ const Practice = () => {
 
     setLoading(true);
     try {
+      if (problem.source === "leetcode") {
+        const correctPattern = problem.correctPattern;
+        const isCorrect =
+          Boolean(correctPattern) && selectedPattern === correctPattern;
+
+        setFeedback({
+          id: `leetcode-attempt:${problem.titleSlug}`,
+          isCorrect,
+          correctPattern: correctPattern || "unknown",
+          selectedPattern,
+          explanation: correctPattern
+            ? `${getPatternName(correctPattern)} is inferred from the LeetCode topic tags for this problem.`
+            : "No supported DSA pattern could be inferred from this problem's LeetCode topic tags.",
+        });
+        setShowFeedback(true);
+        return;
+      }
+
       const data = await attemptService.createAttempt({
         problemId: problem.id,
         selectedPattern,
@@ -105,6 +256,161 @@ const Practice = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <form
+        onSubmit={handleSearch}
+        className="mb-6 rounded-lg border border-border bg-card p-4"
+      >
+        <div className="flex flex-col gap-3 md:flex-row">
+          <label className="relative flex-1">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
+              <Icon name="search" size={18} />
+            </span>
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search LeetCode question, e.g. two-sum"
+              className="input-field w-full pl-11"
+            />
+          </label>
+          <button type="submit" disabled={loading} className="btn-primary">
+            {loading ? "Searching..." : "Fetch Question"}
+          </button>
+          <button
+            type="button"
+            onClick={loadProblem}
+            disabled={loading}
+            className="btn-secondary"
+          >
+            Random Local
+          </button>
+        </div>
+        {searchError && (
+          <p className="mt-3 text-sm font-medium text-red-600">
+            {searchError}
+          </p>
+        )}
+      </form>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle>All LeetCode Problems</CardTitle>
+              <p className="mt-1 text-sm text-text-secondary">
+                Showing {filteredProblemList.length} of {problemListTotal || problemList.length}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+                  <Icon name="search" size={16} />
+                </span>
+                <input
+                  value={problemListSearch}
+                  onChange={(event) => setProblemListSearch(event.target.value)}
+                  placeholder="Filter loaded problems"
+                  className="input-field w-full py-2 pl-9 text-sm sm:w-56"
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {["ALL", "EASY", "MEDIUM", "HARD"].map((diff) => (
+                  <button
+                    key={diff}
+                    type="button"
+                    onClick={() => setProblemListDifficulty(diff)}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                      problemListDifficulty === diff
+                        ? "bg-accent text-white"
+                        : "bg-background border border-border text-text-secondary hover:border-accent/50"
+                    }`}
+                  >
+                    {diff}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {problemListError && (
+            <p className="mb-3 text-sm font-medium text-red-600">
+              {problemListError}
+            </p>
+          )}
+
+          <div className="max-h-[28rem] overflow-auto rounded-lg border border-border">
+            <div className="min-w-[720px]">
+              <div className="grid grid-cols-[5rem_1fr_7rem_12rem_6rem] gap-3 border-b border-border bg-background px-4 py-3 text-xs font-semibold uppercase text-text-muted">
+                <div>ID</div>
+                <div>Problem</div>
+                <div>Difficulty</div>
+                <div>Pattern</div>
+                <div></div>
+              </div>
+
+              {filteredProblemList.map((item) => (
+                <div
+                  key={item.titleSlug}
+                  className="grid grid-cols-[5rem_1fr_7rem_12rem_6rem] gap-3 border-b border-border px-4 py-3 text-sm last:border-b-0"
+                >
+                  <div className="font-mono text-text-muted">{item.id}</div>
+                  <div>
+                    <div className="font-medium text-text-primary">
+                      {item.title}
+                    </div>
+                    <div className="text-xs text-text-secondary">
+                      {item.titleSlug}
+                    </div>
+                  </div>
+                  <div className="capitalize text-text-secondary">
+                    {item.difficulty}
+                  </div>
+                  <div className="text-text-secondary">
+                    {item.inferredPatterns?.length > 0
+                      ? item.inferredPatterns.map(getPatternName).join(", ")
+                      : "Unmapped"}
+                  </div>
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectLeetCodeProblem(item.titleSlug)}
+                      className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-text-primary hover:border-accent hover:text-accent"
+                    >
+                      Open
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {!problemListLoading && filteredProblemList.length === 0 && (
+                <div className="px-4 py-8 text-center text-sm text-text-secondary">
+                  No problems match your search.
+                </div>
+              )}
+
+              {problemListLoading && (
+                <div className="px-4 py-8 text-center text-sm text-text-secondary">
+                  Loading problems...
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <button
+            type="button"
+            onClick={() => loadProblemList()}
+            disabled={
+              problemListLoading ||
+              (problemListTotal > 0 && problemList.length >= problemListTotal)
+            }
+            className="btn-secondary w-full"
+          >
+            {problemListLoading ? "Loading..." : "Load More Problems"}
+          </button>
+        </CardFooter>
+      </Card>
+
       {/* Difficulty Selector */}
       {!showFeedback && (
         <div className="flex justify-center gap-2 mb-8">
@@ -125,7 +431,7 @@ const Practice = () => {
       )}
 
       {problem && !showFeedback && (
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div ref={problemDetailRef} className="grid scroll-mt-24 lg:grid-cols-2 gap-6">
           {/* Problem Description */}
           <div>
             <Card>
@@ -138,15 +444,69 @@ const Practice = () => {
                     <span className="px-3 py-1 rounded-full text-sm capitalize bg-accent/10 text-accent border border-accent/20">
                       {problem.difficulty}
                     </span>
+                    {problem.source === "leetcode" && (
+                      <a
+                        href={problem.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="ml-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-background text-text-secondary border border-border hover:text-accent"
+                      >
+                        LeetCode
+                        <Icon name="externalLink" size={14} />
+                      </a>
+                    )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="prose max-w-none">
-                  <p className="whitespace-pre-wrap text-text-primary leading-relaxed">
-                    {problem.description}
-                  </p>
-                </div>
+                {problem.contentHtml ? (
+                  <div
+                    className="prose max-w-none text-text-primary leading-relaxed [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:bg-background [&_pre]:p-4 [&_code]:font-mono [&_strong]:text-text-primary"
+                    dangerouslySetInnerHTML={{ __html: problem.contentHtml }}
+                  />
+                ) : (
+                  <div className="prose max-w-none">
+                    <p className="whitespace-pre-wrap text-text-primary leading-relaxed">
+                      {problem.description}
+                    </p>
+                  </div>
+                )}
+
+                {problem.tags && problem.tags.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="font-display font-semibold text-lg text-text-primary mb-3">
+                      LeetCode Tags:
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {problem.tags.map((tag) => (
+                        <span
+                          key={tag.slug}
+                          className="px-3 py-1 rounded-full bg-background border border-border text-sm text-text-secondary"
+                        >
+                          {tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {problem.inferredPatterns?.length > 0 && (
+                  <div className="mt-6 rounded-lg border border-accent/20 bg-accent/10 p-4">
+                    <div className="text-sm font-medium text-text-primary">
+                      Pattern from API tags
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {problem.inferredPatterns.map((pattern) => (
+                        <span
+                          key={pattern}
+                          className="px-3 py-1 rounded-full bg-card border border-accent/20 text-sm font-medium text-accent"
+                        >
+                          {getPatternName(pattern)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {problem.examples && problem.examples.length > 0 && (
                   <div className="mt-6">
