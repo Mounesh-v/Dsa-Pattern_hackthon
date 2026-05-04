@@ -2,6 +2,8 @@ const Attempt = require("../models/Attempt");
 const Problem = require("../models/Problem");
 const User = require("../models/User");
 const Analytics = require("../models/Analytics");
+const SessionHistory = require("../models/SessionHistory");
+const { generateConfusionExplanation } = require("../services/geminiService");
 
 // @desc    Create attempt
 // @route   POST /api/attempts
@@ -47,6 +49,14 @@ exports.createAttempt = async (req, res, next) => {
       : problem.wrongPatternExplanations.get(selectedPattern) ||
         `Incorrect. The correct pattern is ${problem.correctPattern}. ${selectedPattern} doesn't work here because...`;
 
+    const confusionExplanation = isCorrect
+      ? null
+      : await generateConfusionExplanation({
+          problem,
+          correctPattern: problem.correctPattern,
+          selectedPattern,
+        });
+
     res.status(201).json({
       success: true,
       attempt: {
@@ -55,6 +65,7 @@ exports.createAttempt = async (req, res, next) => {
         correctPattern: problem.correctPattern,
         selectedPattern,
         explanation,
+        confusionExplanation,
         timeTaken,
         exampleSolution: isCorrect ? problem.exampleSolution : null,
       },
@@ -93,6 +104,7 @@ exports.createSessionAttempt = async (req, res, next) => {
     };
 
     const createdAttempts = [];
+    const sessionAttemptHistory = [];
 
     for (const attemptItem of attempts) {
       const {
@@ -115,6 +127,14 @@ exports.createSessionAttempt = async (req, res, next) => {
       };
 
       createdAttempts.push(attemptData);
+      sessionAttemptHistory.push({
+        problemId,
+        selectedPattern,
+        correctPattern: problem.correctPattern,
+        isCorrect,
+        timeTaken,
+        source,
+      });
       sessionStats.totalQuestions += 1;
       sessionStats.totalTime += timeTaken;
       if (isCorrect) {
@@ -163,6 +183,12 @@ exports.createSessionAttempt = async (req, res, next) => {
       await Attempt.insertMany(createdAttempts);
     }
 
+    if (sessionStats.totalQuestions === 0) {
+      return res
+        .status(400)
+        .json({ message: "No valid session attempts were provided" });
+    }
+
     const topConfusions = Object.entries(sessionStats.confusions)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
@@ -194,47 +220,83 @@ exports.createSessionAttempt = async (req, res, next) => {
     );
 
     const savedAnalytics = await Analytics.findOne({ userId });
+    const summary = {
+      totalQuestions: sessionStats.totalQuestions,
+      correctAnswers: sessionStats.correctAnswers,
+      incorrectAnswers: sessionStats.totalQuestions - sessionStats.correctAnswers,
+      sessionAccuracy: Number(
+        (
+          (sessionStats.correctAnswers / sessionStats.totalQuestions) *
+          100
+        ).toFixed(1),
+      ),
+      weakQuestions: sessionStats.weakQuestions,
+      weakCorrect: sessionStats.weakCorrect,
+      weakAccuracy:
+        sessionStats.weakQuestions > 0
+          ? Number(
+              (
+                (sessionStats.weakCorrect / sessionStats.weakQuestions) *
+                100
+              ).toFixed(1),
+            )
+          : 0,
+      randomCorrect: sessionStats.randomCorrect,
+      totalTime: sessionStats.totalTime,
+      averageTime:
+        sessionStats.totalQuestions > 0
+          ? Number(
+              (sessionStats.totalTime / sessionStats.totalQuestions).toFixed(
+                1,
+              ),
+            )
+          : 0,
+      topConfusions,
+      improvementNotes,
+      previousOverallAccuracy: Number(previousOverallAccuracy.toFixed(1)),
+      newOverallAccuracy: savedAnalytics?.overallStats?.overallAccuracy || 0,
+      weakPatterns: savedAnalytics?.weakPatterns || [],
+    };
+
+    const sessionHistory = await SessionHistory.create({
+      userId,
+      ...summary,
+      attempts: sessionAttemptHistory,
+    });
 
     res.status(201).json({
       success: true,
       summary: {
-        totalQuestions: sessionStats.totalQuestions,
-        correctAnswers: sessionStats.correctAnswers,
-        incorrectAnswers:
-          sessionStats.totalQuestions - sessionStats.correctAnswers,
-        sessionAccuracy: Number(
-          (
-            (sessionStats.correctAnswers / sessionStats.totalQuestions) *
-            100
-          ).toFixed(1),
-        ),
-        weakQuestions: sessionStats.weakQuestions,
-        weakCorrect: sessionStats.weakCorrect,
-        weakAccuracy:
-          sessionStats.weakQuestions > 0
-            ? Number(
-                (
-                  (sessionStats.weakCorrect / sessionStats.weakQuestions) *
-                  100
-                ).toFixed(1),
-              )
-            : 0,
-        randomCorrect: sessionStats.randomCorrect,
-        totalTime: sessionStats.totalTime,
-        averageTime:
-          sessionStats.totalQuestions > 0
-            ? Number(
-                (sessionStats.totalTime / sessionStats.totalQuestions).toFixed(
-                  1,
-                ),
-              )
-            : 0,
-        topConfusions,
-        improvementNotes,
-        previousOverallAccuracy: Number(previousOverallAccuracy.toFixed(1)),
-        newOverallAccuracy: savedAnalytics?.overallStats?.overallAccuracy || 0,
-        weakPatterns: savedAnalytics?.weakPatterns || [],
+        id: sessionHistory._id,
+        completedAt: sessionHistory.completedAt,
+        ...summary,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get completed session practice history
+// @route   GET /api/attempts/session/history
+// @access  Private
+exports.getSessionHistory = async (req, res, next) => {
+  try {
+    const { limit = 20, skip = 0 } = req.query;
+
+    const query = { userId: req.user.id };
+    const sessions = await SessionHistory.find(query)
+      .sort({ completedAt: -1 })
+      .limit(parseInt(limit))
+      .skip(parseInt(skip));
+
+    const total = await SessionHistory.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      count: sessions.length,
+      total,
+      sessions,
     });
   } catch (error) {
     next(error);

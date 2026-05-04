@@ -56,6 +56,11 @@ const userSchema = new mongoose.Schema({
     avgAccuracy: { type: Number, default: 0 },
     totalAttempts: { type: Number, default: 0 },
   },
+  tutorScore: {
+    totalScore: { type: Number, default: 0 },
+    scoredQuestions: { type: Number, default: 0 },
+    averageScore: { type: Number, default: 0 },
+  },
   achievements: [{
     type: {
       type: String,

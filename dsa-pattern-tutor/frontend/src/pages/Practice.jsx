@@ -254,6 +254,17 @@ const Practice = () => {
                     <p className="text-text-secondary">{feedback.explanation}</p>
                   </div>
                 )}
+
+                {feedback.confusionExplanation && (
+                  <div className="p-4 bg-accent/5 border border-accent/20 rounded-lg">
+                    <h3 className="font-medium text-text-primary mb-2">
+                      Confusion Explanator:
+                    </h3>
+                    <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
+                      {feedback.confusionExplanation}
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
             <CardFooter>

@@ -16,6 +16,7 @@ exports.getProfile = async (req, res, next) => {
         role: user.role,
         patternStats: user.patternStats,
         speedRecords: user.speedRecords,
+        tutorScore: user.tutorScore,
         achievements: user.achievements,
         createdAt: user.createdAt,
       },
@@ -46,6 +47,7 @@ exports.updateProfile = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        tutorScore: user.tutorScore,
       },
     });
   } catch (error) {

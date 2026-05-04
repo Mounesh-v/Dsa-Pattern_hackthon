@@ -201,8 +201,8 @@ const SessionPractice = () => {
           Session Practice
         </h1>
         <p className="text-text-secondary mt-2 max-w-2xl">
-          Work through a 30-question session with exactly 15 weak-topic
-          questions and 15 random questions. Submit each question as you go and
+          Work through a 12-question session with weak-topic and random
+          questions. Submit each question as you go and
           review your detailed results at the end.
         </p>
       </div>
@@ -373,7 +373,7 @@ const SessionPractice = () => {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-text-secondary text-sm">
-                  <li>Work through all 30 questions without skipping.</li>
+                  <li>Work through all 12 questions without skipping.</li>
                   <li>Use the pattern list to narrow your reasoning.</li>
                   <li>Focus on weak-concept questions to boost accuracy.</li>
                 </ul>

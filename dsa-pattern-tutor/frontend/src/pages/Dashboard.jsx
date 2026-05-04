@@ -5,10 +5,12 @@ import Icon from '../components/Icon';
 import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../components/Card';
 import ProgressBar from '../components/ProgressBar';
 import { analyticsService } from '../services/analyticsService';
+import { codeService } from '../services/codeService';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
+  const [tutorScore, setTutorScore] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +23,13 @@ const Dashboard = () => {
       setDashboardData(data.data);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
+    }
+
+    try {
+      const scoreData = await codeService.getTutorScore();
+      setTutorScore(scoreData.tutorScore);
+    } catch (error) {
+      console.error('Failed to load tutor score:', error);
     } finally {
       setLoading(false);
     }
@@ -48,10 +57,25 @@ const Dashboard = () => {
     <div className="container mx-auto px-6 py-8">
       {/* Functional Hero */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <h1 className="font-display font-bold text-2xl text-text-primary">
-            Welcome back, {user?.name?.split(' ')[0] || 'Learner'}
-          </h1>
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="font-display font-bold text-2xl text-text-primary">
+              Welcome back, {user?.name?.split(' ')[0] || 'Learner'}
+            </h1>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card px-4 py-3 text-right">
+            <div className="text-xs uppercase tracking-wide text-text-secondary">
+              Tutor Score
+            </div>
+            <div className="mt-1 font-display text-2xl font-bold text-text-primary">
+              {Math.round(tutorScore?.totalScore || 0)}
+            </div>
+            <div className="text-xs text-text-secondary">
+              {tutorScore?.scoredQuestions || 0} code questions · avg{' '}
+              {Math.round(tutorScore?.averageScore || 0)}/100
+            </div>
+          </div>
         </div>
 
         {/* Context-aware insight */}

@@ -11,6 +11,11 @@ export const attemptService = {
     return response.data;
   },
 
+  getSessionHistory: async (params = {}) => {
+    const response = await api.get("/attempts/session/history", { params });
+    return response.data;
+  },
+
   getAttemptHistory: async (params = {}) => {
     const response = await api.get("/attempts", { params });
     return response.data;
