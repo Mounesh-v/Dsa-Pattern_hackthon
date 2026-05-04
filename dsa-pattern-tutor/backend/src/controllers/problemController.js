@@ -1,13 +1,23 @@
-const Problem = require('../models/Problem');
-const User = require('../models/User');
-const Analytics = require('../models/Analytics');
+const mongoose = require("mongoose");
+const Problem = require("../models/Problem");
+const User = require("../models/User");
+const Analytics = require("../models/Analytics");
+
+const formatProblemForSession = (problem) => ({
+  id: problem._id,
+  title: problem.title,
+  description: problem.description,
+  difficulty: problem.difficulty,
+  examples: problem.examples,
+  constraints: problem.constraints,
+  timeLimit: problem.timeLimit,
+});
 
 // @desc    Get random problem
 // @route   GET /api/problems/random
 // @access  Public
 exports.getRandomProblem = async (req, res, next) => {
   try {
-    console.log(req.query)
     const { difficulty } = req.query;
 
     const query = { isActive: true };
@@ -21,7 +31,7 @@ exports.getRandomProblem = async (req, res, next) => {
     const problem = await Problem.findOne(query).skip(random);
 
     if (!problem) {
-      return res.status(404).json({ message: 'No problems found' });
+      return res.status(404).json({ message: "No problems found" });
     }
 
     // Return problem without correct pattern
@@ -69,7 +79,8 @@ exports.getAdaptiveProblem = async (req, res, next) => {
     }
 
     // Get problems for weakest patterns
-    const pattern = weakPatterns[Math.floor(Math.random() * weakPatterns.length)].pattern;
+    const pattern =
+      weakPatterns[Math.floor(Math.random() * weakPatterns.length)].pattern;
     const problems = await Problem.find({
       correctPattern: pattern,
       isActive: true,
@@ -103,6 +114,84 @@ exports.getAdaptiveProblem = async (req, res, next) => {
   }
 };
 
+// @desc    Get session practice problems
+// @route   GET /api/problems/session
+// @access  Private
+exports.getSessionProblems = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const analytics = await Analytics.findOne({ userId });
+    const weakPatterns =
+      analytics?.weakPatterns?.map((pattern) => pattern.pattern) || [];
+
+    const selectedProblemIds = [];
+    const problems = [];
+
+    if (weakPatterns.length > 0) {
+      const weakProblems = await Problem.aggregate([
+        { $match: { correctPattern: { $in: weakPatterns }, isActive: true } },
+        { $sample: { size: 15 } },
+      ]);
+
+      weakProblems.forEach((problem) => {
+        selectedProblemIds.push(problem._id);
+        problems.push({ source: "weak", ...formatProblemForSession(problem) });
+      });
+    }
+
+    const randomQuery = { isActive: true };
+    if (selectedProblemIds.length > 0) {
+      randomQuery._id = { $nin: selectedProblemIds };
+    }
+
+    const randomSize = 30 - problems.length;
+    if (randomSize > 0) {
+      const randomProblems = await Problem.aggregate([
+        { $match: randomQuery },
+        { $sample: { size: randomSize } },
+      ]);
+
+      randomProblems.forEach((problem) => {
+        selectedProblemIds.push(problem._id);
+        problems.push({
+          source: "random",
+          ...formatProblemForSession(problem),
+        });
+      });
+    }
+
+    if (problems.length < 30) {
+      const fillQuery = { isActive: true, _id: { $nin: selectedProblemIds } };
+      const fillCount = 30 - problems.length;
+      const fillProblems = await Problem.aggregate([
+        { $match: fillQuery },
+        {
+          $sample: {
+            size: Math.min(fillCount, await Problem.countDocuments(fillQuery)),
+          },
+        },
+      ]);
+      fillProblems.forEach((problem) => {
+        problems.push({
+          source: "random",
+          ...formatProblemForSession(problem),
+        });
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      session: {
+        totalQuestions: problems.length,
+        weakPatterns,
+        questions: problems,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Create new problem
 // @route   POST /api/problems
 // @access  Private/Admin
@@ -130,7 +219,7 @@ exports.updateProblem = async (req, res, next) => {
     let problem = await Problem.findById(req.params.id);
 
     if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
+      return res.status(404).json({ message: "Problem not found" });
     }
 
     problem = await Problem.findByIdAndUpdate(req.params.id, req.body, {
@@ -155,14 +244,14 @@ exports.deleteProblem = async (req, res, next) => {
     const problem = await Problem.findById(req.params.id);
 
     if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
+      return res.status(404).json({ message: "Problem not found" });
     }
 
     await problem.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: 'Problem deleted successfully',
+      message: "Problem deleted successfully",
     });
   } catch (error) {
     next(error);
@@ -200,7 +289,7 @@ exports.getProblemById = async (req, res, next) => {
     const problem = await Problem.findById(req.params.id);
 
     if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
+      return res.status(404).json({ message: "Problem not found" });
     }
 
     res.status(200).json({

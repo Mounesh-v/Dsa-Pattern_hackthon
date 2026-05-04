@@ -40,7 +40,7 @@ const attemptSchema = new mongoose.Schema({
   },
   mode: {
     type: String,
-    enum: ['blind', 'speed', 'adaptive'],
+    enum: ['practice', 'blind', 'speed', 'adaptive'],
     default: 'blind',
   },
   date: {

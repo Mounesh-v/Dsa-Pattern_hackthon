@@ -1,17 +1,17 @@
-const express = require('express');
+const express = require("express");
 const {
   createAttempt,
+  createSessionAttempt,
   getAttemptHistory,
   getUserStats,
-} = require('../controllers/attemptController');
-const { protect } = require('../middleware/auth');
+} = require("../controllers/attemptController");
+const { protect } = require("../middleware/auth");
 
 const router = express.Router();
 
-router.route('/')
-  .post(protect, createAttempt)
-  .get(protect, getAttemptHistory);
+router.route("/").post(protect, createAttempt).get(protect, getAttemptHistory);
 
-router.get('/stats', protect, getUserStats);
+router.post("/session", protect, createSessionAttempt);
+router.get("/stats", protect, getUserStats);
 
 module.exports = router;

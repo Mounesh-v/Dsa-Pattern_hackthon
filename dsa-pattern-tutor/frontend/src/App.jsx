@@ -1,23 +1,29 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
-import { ToastProvider } from './components/Toast';
-import ErrorBoundary from './components/ErrorBoundary';
-import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './layouts/Layout';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import { ToastProvider } from "./components/Toast";
+import ErrorBoundary from "./components/ErrorBoundary";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./layouts/Layout";
 
 // Pages
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import Dashboard from './pages/Dashboard';
-import Patterns from './pages/Patterns';
-import PatternDetail from './pages/PatternDetail';
-import Practice from './pages/Practice';
-import WeaknessReport from './pages/WeaknessReport';
-import Progress from './pages/Progress';
-import Profile from './pages/Profile';
-import AdminDashboard from './pages/AdminDashboard';
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import Dashboard from "./pages/Dashboard";
+import Patterns from "./pages/Patterns";
+import PatternDetail from "./pages/PatternDetail";
+import Practice from "./pages/Practice";
+import SessionPractice from "./pages/SessionPractice";
+import WeaknessReport from "./pages/WeaknessReport";
+import Progress from "./pages/Progress";
+import Profile from "./pages/Profile";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -75,6 +81,17 @@ function App() {
                   }
                 >
                   <Route index element={<Practice />} />
+                </Route>
+
+                <Route
+                  path="/session-practice"
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<SessionPractice />} />
                 </Route>
 
                 <Route
