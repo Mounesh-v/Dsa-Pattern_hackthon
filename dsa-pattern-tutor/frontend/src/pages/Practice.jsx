@@ -19,7 +19,7 @@ const PATTERNS = [
   { id: 'prefixSum', name: 'Prefix Sum' },
   { id: 'recursion', name: 'Recursion' },
 ];
-
+//dark mode added
 const Practice = () => {
   const [problem, setProblem] = useState(null);
   const [selectedPattern, setSelectedPattern] = useState(null);
