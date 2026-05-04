@@ -12,6 +12,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { to: "/dashboard", label: "Dashboard", icon: "home" },
     { to: "/patterns", label: "Patterns", icon: "grid" },
     { to: "/practice", label: "Practice", icon: "target" },
+    { to: "/code", label: "Code", icon: "code" },
     { to: "/session-practice", label: "Session Practice", icon: "clock" },
     { to: "/weakness", label: "Weakness Report", icon: "chart" },
     { to: "/progress", label: "Progress", icon: "trendingUp" },

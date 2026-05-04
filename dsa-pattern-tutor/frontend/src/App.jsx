@@ -19,6 +19,7 @@ import Dashboard from "./pages/Dashboard";
 import Patterns from "./pages/Patterns";
 import PatternDetail from "./pages/PatternDetail";
 import Practice from "./pages/Practice";
+import Code from "./pages/Code";
 import SessionPractice from "./pages/SessionPractice";
 import WeaknessReport from "./pages/WeaknessReport";
 import Progress from "./pages/Progress";
@@ -81,6 +82,17 @@ function App() {
                   }
                 >
                   <Route index element={<Practice />} />
+                </Route>
+
+                <Route
+                  path="/code"
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Code />} />
                 </Route>
 
                 <Route

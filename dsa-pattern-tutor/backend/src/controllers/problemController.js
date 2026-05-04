@@ -3,6 +3,9 @@ const Problem = require("../models/Problem");
 const User = require("../models/User");
 const Analytics = require("../models/Analytics");
 
+const SESSION_QUESTION_COUNT = 12;
+const WEAK_SESSION_QUESTION_COUNT = 6;
+
 const formatProblemForSession = (problem) => ({
   id: problem._id,
   title: problem.title,
@@ -130,7 +133,7 @@ exports.getSessionProblems = async (req, res, next) => {
     if (weakPatterns.length > 0) {
       const weakProblems = await Problem.aggregate([
         { $match: { correctPattern: { $in: weakPatterns }, isActive: true } },
-        { $sample: { size: 15 } },
+        { $sample: { size: WEAK_SESSION_QUESTION_COUNT } },
       ]);
 
       weakProblems.forEach((problem) => {
@@ -144,7 +147,7 @@ exports.getSessionProblems = async (req, res, next) => {
       randomQuery._id = { $nin: selectedProblemIds };
     }
 
-    const randomSize = 30 - problems.length;
+    const randomSize = SESSION_QUESTION_COUNT - problems.length;
     if (randomSize > 0) {
       const randomProblems = await Problem.aggregate([
         { $match: randomQuery },
@@ -160,9 +163,9 @@ exports.getSessionProblems = async (req, res, next) => {
       });
     }
 
-    if (problems.length < 30) {
+    if (problems.length < SESSION_QUESTION_COUNT) {
       const fillQuery = { isActive: true, _id: { $nin: selectedProblemIds } };
-      const fillCount = 30 - problems.length;
+      const fillCount = SESSION_QUESTION_COUNT - problems.length;
       const fillProblems = await Problem.aggregate([
         { $match: fillQuery },
         {

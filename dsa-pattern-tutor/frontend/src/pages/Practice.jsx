@@ -298,6 +298,31 @@ const Practice = () => {
                   </div>
                 )}
 
+<<<<<<< HEAD
+                {feedback.confusionExplanation && (
+                  <div className="p-4 bg-accent/5 border border-accent/20 rounded-lg">
+                    <h3 className="font-medium text-text-primary mb-2">
+                      Confusion Explanator:
+                    </h3>
+                    <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
+                      {feedback.confusionExplanation}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter>
+              <div className="flex gap-3">
+                <button onClick={handleNextProblem} className="btn-primary flex-1">
+                  Next Problem
+                </button>
+                <button onClick={() => setShowFeedback(false)} className="btn-secondary">
+                  Review
+                </button>
+              </div>
+            </CardFooter>
+          </Card>
+=======
                 {!feedback.isCorrect && (
                   <div className="p-4 bg-red-50 rounded-lg border border-red-200">
                     <h3 className="font-medium text-red-700 mb-2">
@@ -393,6 +418,7 @@ const Practice = () => {
               </CardContent>
             </Card>
           </div>
+>>>>>>> 57a5b91aa60546f143543f7b02f6ae895331f563
         </div>
       )}
     </div>

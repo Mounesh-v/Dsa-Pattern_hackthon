@@ -8,15 +8,16 @@ const path = require('path');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
-// Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+async function startServer() {
+  // Load environment variables
+  dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+  process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Connect to database
-connectDB();
+  // Connect to database
+  await connectDB();
 
-const app = express();
+  const app = express();
 
 // Security middleware
 app.use(helmet());
@@ -70,6 +71,7 @@ app.use('/api/problems', require('./routes/problems'));
 app.use('/api/attempts', require('./routes/attempts'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/code', require('./routes/code'));
 
 // Error handling middleware
 app.use(errorHandler);
@@ -79,8 +81,11 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+  app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  });
+}
+
+startServer().catch(console.error);

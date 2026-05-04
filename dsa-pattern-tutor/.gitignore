@@ -47,3 +47,4 @@ frontend/.env
 backend/.env
 backend/uploads/
 backend/logs/
+backend/dev-server*.log
