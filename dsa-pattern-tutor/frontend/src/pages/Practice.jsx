@@ -1,23 +1,28 @@
-import { useState, useEffect } from 'react';
-import Icon from '../components/Icon';
-import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../components/Card';
-import { problemService } from '../services/problemService';
-import { attemptService } from '../services/attemptService';
+import { useState, useEffect } from "react";
+import Icon from "../components/Icon";
+import Card, {
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "../components/Card";
+import { problemService } from "../services/problemService";
+import { attemptService } from "../services/attemptService";
 
 const PATTERNS = [
-  { id: 'slidingWindow', name: 'Sliding Window' },
-  { id: 'twoPointers', name: 'Two Pointers' },
-  { id: 'binarySearch', name: 'Binary Search' },
-  { id: 'dynamicProgramming', name: 'Dynamic Programming' },
-  { id: 'greedy', name: 'Greedy' },
-  { id: 'backtracking', name: 'Backtracking' },
-  { id: 'graphTraversal', name: 'Graph Traversal' },
-  { id: 'dfs', name: 'DFS' },
-  { id: 'bfs', name: 'BFS' },
-  { id: 'heap', name: 'Heap' },
-  { id: 'unionFind', name: 'Union Find' },
-  { id: 'prefixSum', name: 'Prefix Sum' },
-  { id: 'recursion', name: 'Recursion' },
+  { id: "slidingWindow", name: "Sliding Window" },
+  { id: "twoPointers", name: "Two Pointers" },
+  { id: "binarySearch", name: "Binary Search" },
+  { id: "dynamicProgramming", name: "Dynamic Programming" },
+  { id: "greedy", name: "Greedy" },
+  { id: "backtracking", name: "Backtracking" },
+  { id: "graphTraversal", name: "Graph Traversal" },
+  { id: "dfs", name: "DFS" },
+  { id: "bfs", name: "BFS" },
+  { id: "heap", name: "Heap" },
+  { id: "unionFind", name: "Union Find" },
+  { id: "prefixSum", name: "Prefix Sum" },
+  { id: "recursion", name: "Recursion" },
 ];
 //dark mode added
 const Practice = () => {
@@ -25,12 +30,23 @@ const Practice = () => {
   const [selectedPattern, setSelectedPattern] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [difficulty, setDifficulty] = useState('medium');
+  const [difficulty, setDifficulty] = useState("medium");
 
   useEffect(() => {
     loadProblem();
+    loadStats();
   }, [difficulty]);
+
+  const loadStats = async () => {
+    try {
+      const data = await attemptService.getUserStats();
+      setStats(data.stats);
+    } catch (error) {
+      console.error("Failed to load user stats:", error);
+    }
+  };
 
   const loadProblem = async () => {
     setLoading(true);
@@ -41,7 +57,7 @@ const Practice = () => {
       setShowFeedback(false);
       setFeedback(null);
     } catch (error) {
-      console.error('Failed to load problem:', error);
+      console.error("Failed to load problem:", error);
     } finally {
       setLoading(false);
     }
@@ -49,7 +65,7 @@ const Practice = () => {
 
   const handleSubmit = async () => {
     if (!selectedPattern) {
-      alert('Please select a pattern');
+      alert("Please select a pattern");
       return;
     }
 
@@ -59,13 +75,14 @@ const Practice = () => {
         problemId: problem.id,
         selectedPattern,
         timeTaken: 0,
-        mode: 'practice',
+        mode: "practice",
       });
 
       setFeedback(data.attempt);
       setShowFeedback(true);
+      await loadStats();
     } catch (error) {
-      console.error('Failed to submit attempt:', error);
+      console.error("Failed to submit attempt:", error);
     } finally {
       setLoading(false);
     }
@@ -91,14 +108,14 @@ const Practice = () => {
       {/* Difficulty Selector */}
       {!showFeedback && (
         <div className="flex justify-center gap-2 mb-8">
-          {['easy', 'medium', 'hard'].map((diff) => (
+          {["easy", "medium", "hard"].map((diff) => (
             <button
               key={diff}
               onClick={() => setDifficulty(diff)}
               className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
                 difficulty === diff
-                  ? 'bg-accent text-white'
-                  : 'bg-card border border-border text-text-secondary hover:bg-accent/5'
+                  ? "bg-accent text-white"
+                  : "bg-card border border-border text-text-secondary hover:bg-accent/5"
               }`}
             >
               {diff}
@@ -138,14 +155,21 @@ const Practice = () => {
                     </h3>
                     <div className="space-y-3">
                       {problem.examples.map((example, index) => (
-                        <div key={index} className="p-4 bg-background rounded-lg">
+                        <div
+                          key={index}
+                          className="p-4 bg-background rounded-lg"
+                        >
                           <div className="text-sm mb-2">
-                            <span className="text-text-secondary">Input:</span>{' '}
-                            <span className="font-mono text-text-primary">{example.input}</span>
+                            <span className="text-text-secondary">Input:</span>{" "}
+                            <span className="font-mono text-text-primary">
+                              {example.input}
+                            </span>
                           </div>
                           <div className="text-sm">
-                            <span className="text-text-secondary">Output:</span>{' '}
-                            <span className="font-mono text-text-primary">{example.output}</span>
+                            <span className="text-text-secondary">Output:</span>{" "}
+                            <span className="font-mono text-text-primary">
+                              {example.output}
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -185,8 +209,8 @@ const Practice = () => {
                       onClick={() => setSelectedPattern(pattern.id)}
                       className={`p-4 rounded-lg text-left transition-all ${
                         selectedPattern === pattern.id
-                          ? 'bg-accent text-white border-2 border-accent'
-                          : 'bg-background border-2 border-border text-text-secondary hover:border-accent/50'
+                          ? "bg-accent text-white border-2 border-accent"
+                          : "bg-background border-2 border-border text-text-secondary hover:border-accent/50"
                       }`}
                     >
                       <div className="font-medium text-sm">{pattern.name}</div>
@@ -200,7 +224,7 @@ const Practice = () => {
                   disabled={!selectedPattern || loading}
                   className="btn-primary w-full"
                 >
-                  {loading ? 'Submitting...' : 'Submit Answer'}
+                  {loading ? "Submitting..." : "Submit Answer"}
                 </button>
               </CardFooter>
             </Card>
@@ -210,63 +234,165 @@ const Practice = () => {
 
       {/* Feedback */}
       {showFeedback && feedback && (
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                  feedback.isCorrect ? 'bg-green-100' : 'bg-red-100'
-                }`}>
-                  <Icon
-                    name={feedback.isCorrect ? 'check' : 'x'}
-                    size={32}
-                    className={feedback.isCorrect ? 'text-green-600' : 'text-red-600'}
-                  />
+        <div className="max-w-5xl mx-auto space-y-6">
+          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                      feedback.isCorrect ? "bg-green-100" : "bg-red-100"
+                    }`}
+                  >
+                    <Icon
+                      name={feedback.isCorrect ? "check" : "x"}
+                      size={32}
+                      className={
+                        feedback.isCorrect ? "text-green-600" : "text-red-600"
+                      }
+                    />
+                  </div>
+                  <div>
+                    <h2 className="font-display font-bold text-2xl text-text-primary">
+                      {feedback.isCorrect ? "Correct!" : "Incorrect"}
+                    </h2>
+                    <p className="text-text-secondary">
+                      {feedback.isCorrect
+                        ? "Great job identifying the right pattern."
+                        : "This answer was not correct, but you can learn from the confusion."}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="font-display font-bold text-2xl text-text-primary">
-                    {feedback.isCorrect ? 'Correct!' : 'Incorrect'}
-                  </h2>
-                  <p className="text-text-secondary">
-                    {feedback.isCorrect ? 'Great job identifying the pattern!' : 'Keep practicing!'}
-                  </p>
-                </div>
-              </div>
 
-              <div className="space-y-4">
-                <div className="p-4 bg-background rounded-lg">
-                  <h3 className="font-medium text-text-primary mb-2">Your Answer:</h3>
-                  <p className="font-mono text-text-secondary capitalize">
-                    {feedback.selectedPattern.replace(/([A-Z])/g, ' $1').trim()}
-                  </p>
-                </div>
-
-                <div className="p-4 bg-background rounded-lg">
-                  <h3 className="font-medium text-text-primary mb-2">Correct Pattern:</h3>
-                  <p className="font-mono text-text-secondary capitalize">
-                    {feedback.correctPattern.replace(/([A-Z])/g, ' $1').trim()}
-                  </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="p-4 bg-background rounded-lg border border-border">
+                    <h3 className="font-medium text-text-primary mb-2">
+                      Your Answer
+                    </h3>
+                    <p className="font-mono text-text-secondary capitalize">
+                      {feedback.selectedPattern
+                        .replace(/([A-Z])/g, " $1")
+                        .trim()}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-background rounded-lg border border-border">
+                    <h3 className="font-medium text-text-primary mb-2">
+                      Correct Pattern
+                    </h3>
+                    <p className="font-mono text-text-secondary capitalize">
+                      {feedback.correctPattern
+                        .replace(/([A-Z])/g, " $1")
+                        .trim()}
+                    </p>
+                  </div>
                 </div>
 
                 {feedback.explanation && (
-                  <div className="p-4 bg-background rounded-lg">
-                    <h3 className="font-medium text-text-primary mb-2">Explanation:</h3>
-                    <p className="text-text-secondary">{feedback.explanation}</p>
+                  <div className="p-4 bg-background rounded-lg border border-border">
+                    <h3 className="font-medium text-text-primary mb-2">
+                      Explanation
+                    </h3>
+                    <p className="text-text-secondary">
+                      {feedback.explanation}
+                    </p>
                   </div>
                 )}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <div className="flex gap-3">
-                <button onClick={handleNextProblem} className="btn-primary flex-1">
-                  Next Problem
-                </button>
-                <button onClick={() => setShowFeedback(false)} className="btn-secondary">
-                  Review
-                </button>
-              </div>
-            </CardFooter>
-          </Card>
+
+                {!feedback.isCorrect && (
+                  <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                    <h3 className="font-medium text-red-700 mb-2">
+                      Why this confusion happened
+                    </h3>
+                    <p className="text-text-secondary">
+                      {getConfusionAdvice(
+                        feedback.selectedPattern,
+                        feedback.correctPattern,
+                      )}
+                    </p>
+                    <div className="mt-4 text-sm text-text-secondary">
+                      <p className="font-semibold text-text-primary mb-2">
+                        How to track this next time
+                      </p>
+                      <p>
+                        Compare the problem structure against the key traits of
+                        the correct pattern above. If the problem involves{" "}
+                        {feedback.correctPattern
+                          .replace(/([A-Z])/g, " $1")
+                          .trim()
+                          .toLowerCase()}
+                        , focus on those signal words before choosing the
+                        pattern.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter>
+                <div className="flex gap-3 flex-col sm:flex-row">
+                  <button
+                    onClick={handleNextProblem}
+                    className="btn-primary flex-1"
+                  >
+                    Next Problem
+                  </button>
+                  <button
+                    onClick={() => setShowFeedback(false)}
+                    className="btn-secondary flex-1"
+                  >
+                    Review Again
+                  </button>
+                </div>
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Updated Weakness Metrics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="rounded-3xl bg-background p-4 border border-border">
+                    <div className="text-sm text-text-secondary">
+                      Overall Accuracy
+                    </div>
+                    <div className="mt-2 text-3xl font-semibold text-text-primary">
+                      {stats?.overallStats?.overallAccuracy?.toFixed(1) || 0}%
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl bg-background p-4 border border-border">
+                    <div className="text-sm text-text-secondary">
+                      Most Recent Weak Patterns
+                    </div>
+                    {stats?.weakPatterns?.length > 0 ? (
+                      <ul className="mt-3 space-y-2">
+                        {stats.weakPatterns.slice(0, 4).map((pattern) => (
+                          <li
+                            key={pattern.pattern}
+                            className="rounded-2xl bg-white p-3 border border-border"
+                          >
+                            <div className="font-medium text-text-primary capitalize">
+                              {pattern.pattern
+                                .replace(/([A-Z])/g, " $1")
+                                .trim()}
+                            </div>
+                            <div className="text-sm text-text-secondary">
+                              Accuracy: {pattern.accuracy.toFixed(1)}% •
+                              Attempts: {pattern.attempts}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-3 text-text-secondary">
+                        Weak pattern data will appear after more attempts.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
     </div>
