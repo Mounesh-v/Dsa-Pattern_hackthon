@@ -23,13 +23,18 @@ async function startServer() {
 app.use(helmet());
 
 // CORS configuration
-const allowedOrigins = (process.env.CLIENT_URL || 'https://dsa-pattern-hackthon.vercel.app/')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const allowedOrigins = [
+  "https://dsa-pattern-hackthon.vercel.app"
+];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
   credentials: true,
 }));
 
