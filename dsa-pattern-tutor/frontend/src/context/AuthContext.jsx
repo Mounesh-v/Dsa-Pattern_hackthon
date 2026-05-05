@@ -16,6 +16,12 @@ const getAuthErrorMessage = (err, fallback) => {
   return fallback;
 };
 
+const saveAuthToken = (token) => {
+  if (token) {
+    localStorage.setItem('token', token);
+  }
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -53,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     const data = await authService.login(email, password);
 
     // ✅ Save token
-    localStorage.setItem('token', data.token);
+    saveAuthToken(data.token);
 
     // ✅ Set user
     setUser(data.user);
@@ -72,7 +78,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const data = await authService.register(name, email, password);
-      localStorage.removeItem('token');
+      saveAuthToken(data.token);
       setUser(data.user);
       toast.success('Account created successfully');
       return { success: true };
