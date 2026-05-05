@@ -46,22 +46,28 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, [checkAuth]);
 
-  const login = async (email, password) => {
-    try {
-      setError(null);
-      const data = await authService.login(email, password);
-      localStorage.removeItem('token');
-      setUser(data.user);
-      toast.success(`Welcome back, ${data.user.name}`);
-      return { success: true };
-    } catch (err) {
-      const message = getAuthErrorMessage(err, 'Login failed');
-      setError(message);
-      toast.error(message);
-      return { success: false, error: message };
-    }
-  };
+ const login = async (email, password) => {
+  try {
+    setError(null);
 
+    const data = await authService.login(email, password);
+
+    // ✅ Save token
+    localStorage.setItem('token', data.token);
+
+    // ✅ Set user
+    setUser(data.user);
+
+    toast.success(`Welcome back, ${data.user.name}`);
+    return { success: true };
+
+  } catch (err) {
+    const message = getAuthErrorMessage(err, 'Login failed');
+    setError(message);
+    toast.error(message);
+    return { success: false, error: message };
+  }
+};
   const register = async (name, email, password) => {
     try {
       setError(null);
