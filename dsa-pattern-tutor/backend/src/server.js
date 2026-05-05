@@ -24,7 +24,7 @@ app.use(helmet());
 
 // CORS configuration
 const allowedOrigins = [
-  "https://dsa-pattern-hackthon.vercel.app"
+  "https://dsa-pattern-hackthon-4b3c.vercel.app"
 ];
 
 app.use(cors({
