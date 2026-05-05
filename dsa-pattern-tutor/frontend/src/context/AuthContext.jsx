@@ -22,6 +22,20 @@ const saveAuthToken = (token) => {
   }
 };
 
+const getStoredAuthToken = () => {
+  const token = localStorage.getItem('token');
+
+  if (token && token !== 'undefined' && token !== 'null') {
+    return token;
+  }
+
+  if (token) {
+    localStorage.removeItem('token');
+  }
+
+  return null;
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -37,6 +51,12 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   const checkAuth = useCallback(async () => {
+    if (!getStoredAuthToken()) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       const data = await authService.getMe();
       setUser(data.user);
